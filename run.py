@@ -42,7 +42,7 @@ def parse_args():
         "--output_path",
         type=str,
         default=None,
-        help="The path of the input file.",
+        help="The path of the output file.",
     )
     args = parser.parse_args()
     if (

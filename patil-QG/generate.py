@@ -1,20 +1,31 @@
 import json
+import argparse
 from pipelines import pipeline
 
-with open('CMORE/C-MORE_QuestionAnswer-10000-2.json', 'r') as f:
-    data = json.load(f)
+def main(args):
+    with open(args.file, 'r') as f:
+        data = json.load(f)
+    
+    nlp = pipeline('question-generation')
+    l = []
+    for idx, d in enumerate(data):
+        if idx % 100 == 0:
+            print(idx)
+        try:
+            res = nlp(f"{d['answers'][0]} [SEP] {d['question']}")
+            l.append({'id': d['id'], 'question': res[0]['question']})
+        except:
+            break
+    
+    with open('result.json', 'w') as f:
+        json.dump(l, f)
 
-nlp = pipeline('question-generation')
-l = []
-for idx, d in enumerate(data):
-    if idx % 100 == 0:
-        print(idx)
-    try:
-        res = nlp(f"{d['answers'][0]} [SEP] {d['question']}")
-        l.append(res[0]['question'])
-    except:
-        break
+def parse_argument():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--file')
+    args = parser.parse_args()
+    return args
 
-QG = "\n".join(l)
-with open('QG.txt', 'w') as f:
-    f.write(QG)
+if __name__ == '__main__':
+    args = parse_argument()
+    main(args)

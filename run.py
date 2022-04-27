@@ -1,5 +1,7 @@
 import argparse
 import json
+from re import I
+
 from transformers import (AutoModelForSeq2SeqLM, AutoModelWithLMHead,
                           AutoTokenizer, pipeline)
 
@@ -57,15 +59,14 @@ def main():
   qa = read_json(args.input_path)
   result = []
   for entry in qa:
-      question = entry['question']
-      answer = entry['answers']
-
-      moose = qg_moose(answer, question)
+    id = entry["id"]    
+    question = entry['question']
+    answers = entry['answers']
+    if len(answers) > 0:
+      answer = answers[0]    
       mrm = qg_mrm(answer, question)
-
-      entry = {'question': question, 'answer': answer, 'moose': moose, 'mrm': mrm}
+      entry = {'id': id, 'question': mrm}
       result.append(entry)
-
   write_json(args.output_path, result)
 
 if __name__ == "__main__":

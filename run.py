@@ -1,5 +1,7 @@
+import argparse
 import json
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, AutoModelWithLMHead, pipeline
+from transformers import (AutoModelForSeq2SeqLM, AutoModelWithLMHead,
+                          AutoTokenizer, pipeline)
 
 moose_tokenizer = AutoTokenizer.from_pretrained("iarfmoose/t5-base-question-generator")
 moose_model = AutoModelForSeq2SeqLM.from_pretrained("iarfmoose/t5-base-question-generator")
@@ -28,15 +30,43 @@ def qg_mrm(answer, question, max_length=256):
   tokens = raw_output.split('question: ')
   return tokens[-1][:-4]
 
-qa = read_json('C-MORE_QuestionAnswer_clean.json')
-result = []
-for entry in qa:
-    question = entry['question']
-    answer = entry['answers']
-    
-    moose = qg_moose(answer, question)
-    mrm = qg_mrm(answer, question)
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run qg on C-MORE dataset.")
+    parser.add_argument(
+        "--input_path",
+        type=str,
+        default=None,
+        help="The path of the input file.",
+    )
+    parser.add_argument(
+        "--output_path",
+        type=str,
+        default=None,
+        help="The path of the input file.",
+    )
+    args = parser.parse_args()
+    if (
+        args.input_path is None
+        and args.output_path is None
+    ):
+        raise ValueError("No input/output path.")
+    return args
 
-    entry = {'question': question, 'answer': answer, 'moose': moose, 'mrm': mrm}
-    result.append(entry)
-write_json('output', result)
+def main():
+  args = parse_args()    
+  qa = read_json(args.input_path)
+  result = []
+  for entry in qa:
+      question = entry['question']
+      answer = entry['answers']
+
+      moose = qg_moose(answer, question)
+      mrm = qg_mrm(answer, question)
+
+      entry = {'question': question, 'answer': answer, 'moose': moose, 'mrm': mrm}
+      result.append(entry)
+
+  write_json(args.output_path, result)
+
+if __name__ == "__main__":
+    main()

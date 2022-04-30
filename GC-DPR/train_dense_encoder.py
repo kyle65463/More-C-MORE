@@ -18,6 +18,7 @@ import math
 import os
 import random
 import time
+import wandb
 
 import torch
 import torch.distributed as dist
@@ -199,6 +200,7 @@ class BiEncoderTrainer(object):
             validation_loss = self.validate_average_rank()
         else:
             validation_loss = self.validate_nll()
+        wandb.log({'validation_loss': validation_loss}, step=iteration)
 
         if save_cp:
             cp_name = self._save_checkpoint(scheduler, epoch, iteration)
@@ -418,12 +420,14 @@ class BiEncoderTrainer(object):
                 lr = self.optimizer.param_groups[0]['lr']
                 logger.info(
                     'Epoch: %d: Step: %d/%d, loss=%f, lr=%f', epoch, data_iteration, epoch_batches, loss.item(), lr)
+                wandb.log({'loss': loss.item()}, step=data_iteration)
 
             if (i + 1) % rolling_loss_step == 0:
                 logger.info('Train batch %d', data_iteration)
                 latest_rolling_train_av_loss = rolling_train_loss / rolling_loss_step
                 logger.info('Avg. loss per last %d batches: %f', rolling_loss_step, latest_rolling_train_av_loss)
                 rolling_train_loss = 0.0
+                wandb.log({'Avg. loss': latest_rolling_train_av_loss}, step=data_iteration)
 
             if data_iteration % eval_step == 0:
                 logger.info('Validation: Epoch: %d Step: %d/%d', epoch, data_iteration, epoch_batches)
@@ -778,6 +782,8 @@ def main():
     set_seed(args)
     print_args(args)
 
+    wandb.login()
+    wandb.init(project="GC-DPR-CMORE", entity="more-c-more")
     trainer = BiEncoderTrainer(args)
 
     if args.train_file is not None:
@@ -789,6 +795,7 @@ def main():
     else:
         logger.warning("Neither train_file or (model_file & dev_file) parameters are specified. Nothing to do.")
 
+    wandb.finish()
 
 if __name__ == "__main__":
     main()

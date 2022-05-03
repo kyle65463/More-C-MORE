@@ -420,14 +420,14 @@ class BiEncoderTrainer(object):
                 lr = self.optimizer.param_groups[0]['lr']
                 logger.info(
                     'Epoch: %d: Step: %d/%d, loss=%f, lr=%f', epoch, data_iteration, epoch_batches, loss.item(), lr)
-                wandb.log({'loss': loss.item()}, step=data_iteration)
+                wandb.log({'loss': loss.item()}, step=epoch * epoch_batches + data_iteration)
 
             if (i + 1) % rolling_loss_step == 0:
                 logger.info('Train batch %d', data_iteration)
                 latest_rolling_train_av_loss = rolling_train_loss / rolling_loss_step
                 logger.info('Avg. loss per last %d batches: %f', rolling_loss_step, latest_rolling_train_av_loss)
                 rolling_train_loss = 0.0
-                wandb.log({'Avg. loss': latest_rolling_train_av_loss}, step=data_iteration)
+                wandb.log({'Avg. loss': latest_rolling_train_av_loss}, step=epoch * epoch_batches + data_iteration)
 
             if data_iteration % eval_step == 0:
                 logger.info('Validation: Epoch: %d Step: %d/%d', epoch, data_iteration, epoch_batches)

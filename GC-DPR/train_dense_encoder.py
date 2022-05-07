@@ -188,7 +188,7 @@ class BiEncoderTrainer(object):
         if args.local_rank in [-1, 0]:
             logger.info('Training finished. Best validation checkpoint %s', self.best_cp_name)
 
-    def validate_and_save(self, epoch: int, iteration: int, scheduler):
+    def validate_and_save(self, epoch: int, iteration: int, epoch_batches: int, scheduler):
         args = self.args
         # for distributed mode, save checkpoint for only one process
         save_cp = args.local_rank in [-1, 0]
@@ -200,7 +200,7 @@ class BiEncoderTrainer(object):
             validation_loss = self.validate_average_rank()
         else:
             validation_loss = self.validate_nll()
-        wandb.log({'validation_loss': validation_loss}, step=iteration)
+        wandb.log({'validation_loss': validation_loss}, step=epoch * epoch_batches + iteration)
 
         if save_cp:
             cp_name = self._save_checkpoint(scheduler, epoch, iteration)
@@ -383,7 +383,6 @@ class BiEncoderTrainer(object):
         loader = DataLoader(train_data_iterator, num_workers=1, batch_size=None, shuffle=False)
 
         for i, biencoder_batch in enumerate(loader):
-
             # to be able to resume shuffled ctx- pools
             data_iteration = i + start_iteration
 
@@ -431,10 +430,10 @@ class BiEncoderTrainer(object):
 
             if data_iteration % eval_step == 0:
                 logger.info('Validation: Epoch: %d Step: %d/%d', epoch, data_iteration, epoch_batches)
-                self.validate_and_save(epoch, i + start_iteration, scheduler)
+                self.validate_and_save(epoch, i + start_iteration, epoch_batches, scheduler)
                 self.biencoder.train()
 
-        self.validate_and_save(epoch, data_iteration, scheduler)
+        self.validate_and_save(epoch, data_iteration, epoch_batches, scheduler)
 
         epoch_loss = (epoch_loss / epoch_batches) if epoch_batches > 0 else 0
         logger.info('Av Loss per epoch=%f', epoch_loss)

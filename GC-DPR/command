@@ -1,12 +1,1 @@
-python3 train_dense_encoder.py \ 
---encoder_model_type hf_bert \
---pretrained_model_cfg bert-base-uncased \
---train_file data/C-MORE_replaced_QAC_clean_200k.json \ 
---dev_file data/C-MORE_replaced_QAC_clean_200000-220000.json \ 
---output_dir cache/c-more \
---grad_cache \
---q_chunk_size 16 \
---ctx_chunk_size 8 \
---learning_rate 2e-05 \
---num_train_epochs 3 \
---batch_size 56
+python3 train_dense_encoder.py --encoder_model_type hf_bert --pretrained_model_cfg bert-base-uncased --train_file data/patil-QG_replaced_QAC_clean_200k.json --dev_file data/patil-QG_replaced_QAC_clean_200000-220000.json --output_dir cache/patil-QG --grad_cache --q_chunk_size 16 --ctx_chunk_size 8 --learning_rate 2e-05 --num_train_epochs 3 --batch_size 8 --gradient_accumulation_steps 7 --fp16

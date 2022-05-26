@@ -188,10 +188,10 @@ class BiEncoderTrainer(object):
         if args.local_rank in [-1, 0]:
             logger.info('Training finished. Best validation checkpoint %s', self.best_cp_name)
 
-    def validate_and_save(self, epoch: int, iteration: int, epoch_batches: int, scheduler):
+    def validate_and_save(self, epoch: int, iteration: int, epoch_batches: int, scheduler, save_cp: bool):
         args = self.args
         # for distributed mode, save checkpoint for only one process
-        save_cp = args.local_rank in [-1, 0]
+        save_cp = save_cp and args.local_rank in [-1, 0]
 
         if epoch == args.val_av_rank_start_epoch:
             self.best_validation_result = None
@@ -430,10 +430,10 @@ class BiEncoderTrainer(object):
 
             if data_iteration % eval_step == 0:
                 logger.info('Validation: Epoch: %d Step: %d/%d', epoch, data_iteration, epoch_batches)
-                self.validate_and_save(epoch, i + start_iteration, epoch_batches, scheduler)
+                self.validate_and_save(epoch, i + start_iteration, epoch_batches, scheduler, False)
                 self.biencoder.train()
 
-        self.validate_and_save(epoch, data_iteration, epoch_batches, scheduler)
+        self.validate_and_save(epoch, data_iteration, epoch_batches, scheduler, True)
 
         epoch_loss = (epoch_loss / epoch_batches) if epoch_batches > 0 else 0
         logger.info('Av Loss per epoch=%f', epoch_loss)
